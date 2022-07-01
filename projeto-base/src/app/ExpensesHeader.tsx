@@ -14,15 +14,18 @@ const useStyles = makeStyles((theme) => ({
     textAlign: "center",
     color: "#5c5c5c",
     fontWeight: "bold",
+    height: "32px",
   },
   info: {
     display: "flex",
     justifyContent: "between",
   },
   appName: {
+    fontSize: "1.8em",
     padding: theme.spacing(2),
     textAlign: "center",
     color: "#5c5c5c",
+    height: "32px",
   },
 }));
 
@@ -32,6 +35,7 @@ interface IUserInfo {
 }
 
 export function ExpensesHeader(props: IUserInfo) {
+  console.log("header");
   const classes = useStyles();
 
   return (

@@ -1,10 +1,10 @@
 export interface IExpense {
-  id: number;
-  descricao: string;
+  id?: number;
+  descricao?: string;
   categoria: string;
   valor: number;
-  mes: string;
-  dia: string;
+  mes?: string;
+  dia?: string;
 }
 
 export interface IUser {

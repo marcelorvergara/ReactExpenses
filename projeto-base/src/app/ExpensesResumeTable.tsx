@@ -28,7 +28,8 @@ interface IExpensesProps {
   expenses: IExpense[];
 }
 
-export function ExpensesTable(props: IExpensesProps) {
+export function ExpensesResumeTable(props: IExpensesProps) {
+  console.log("resumo");
   const classes = useStyles();
   return (
     <Box paddingX="48px">

@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import Box from "@material-ui/core/Box";
-import InputLabel from "@material-ui/core/InputLabel";
-import FormControl from "@material-ui/core/FormControl";
-import Select from "@material-ui/core/Select";
 import { apiGetExpenses, IExpense } from "./backend";
-import { useParams } from "react-router-dom";
-import { ExpensesTable } from "./ExpensesTable";
+import { useHistory, useParams } from "react-router-dom";
+import { ExpensesResumeTable } from "./ExpensesResumeTable";
 import { Paper, Tabs, Tab } from "@material-ui/core";
+import { ExpensesCatTable } from "./ExpensesCatTable";
+import { ExpensesMenu } from "./ExpensesMenu";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -31,84 +30,94 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export function Expenses() {
-  const YEARS = ["2020", "2021", "2022"];
-  const MONTHS = [
-    { mes: "Janeiro", numMes: "01" },
-    { mes: "Fevereiro", numMes: "02" },
-    { mes: "Março", numMes: "03" },
-    { mes: "Abril", numMes: "04" },
-    { mes: "Maio", numMes: "05" },
-    { mes: "Junho", numMes: "06" },
-    { mes: "Julho", numMes: "07" },
-    { mes: "Agosto", numMes: "08" },
-    { mes: "Setembro", numMes: "09" },
-    { mes: "Outubro", numMes: "10" },
-    { mes: "Novembro", numMes: "11" },
-    { mes: "Dezembro", numMes: "12" },
-  ];
   const { dateParam } = useParams<{ dateParam: string }>();
   const classes = useStyles();
-  const [year, setYear] = useState<string>(dateParam.split("-")[0]);
-  const [month, setMonth] = useState<string>(dateParam.split("-")[1]);
-  const [total, setTotal] = useState<string>("0");
+  const [year, month] = dateParam.split("-");
 
-  const [expenses, setExpenses] = useState<IExpense[]>([]);
-
-  useEffect(() => {
-    apiGetExpenses(year, month).then((resp) => {
-      setTotal(
-        resp
-          .reduce((acc, obj) => {
-            return acc + obj.valor;
-          }, 0)
-          .toLocaleString()
-      );
-      setExpenses(resp);
-    });
-  }, [year, month]);
-
-  const [value, setValue] = useState(1);
-
+  // tabs
+  const [value, setValue] = useState(0);
   const handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
     setValue(newValue);
   };
 
+  function useCalcExpenses(month: string, year: string) {
+    // expenses
+    const [total, setTotal] = useState<string>("0");
+    const [catTotal, setCatTotal] = useState<IExpense[]>([]);
+    const [expenses, setExpenses] = useState<IExpense[]>([]);
+    function calcTotalExp(exp: IExpense[]) {
+      console.log("calc tot total");
+      return exp.reduce((acc, obj) => {
+        return acc + obj.valor;
+      }, 0);
+    }
+
+    function calcCatTotal(exp: IExpense[]) {
+      console.log("calc cat total");
+      const resultCat: IExpense[] = [];
+      exp.forEach((obj) => {
+        const newObj = resultCat.find((f) => f.categoria === obj.categoria);
+        if (!newObj) {
+          resultCat.push({ categoria: obj.categoria, valor: obj.valor });
+        } else {
+          const idx = resultCat.indexOf(newObj);
+          resultCat.splice(idx, 1, {
+            categoria: obj.categoria,
+            valor: newObj.valor + obj.valor,
+          });
+        }
+      });
+      return resultCat;
+    }
+
+    useEffect(() => {
+      console.log("teste");
+      apiGetExpenses(year, month).then((resp) => {
+        // sum of month expenses
+        const totalExpenses = calcTotalExp(resp);
+        setTotal(totalExpenses.toLocaleString());
+        // all expenses (resume)
+        setExpenses(resp);
+        // category expenses (details)
+        const resultCat = calcCatTotal(resp);
+        setCatTotal(resultCat);
+      });
+    }, [year, month]);
+    return {
+      total,
+      catTotal,
+      expenses,
+    };
+  }
+
+  const { total, catTotal, expenses } = useCalcExpenses(month, year);
+
+  // url
+  const history = useHistory();
+
+  const onChangeAno = useCallback(
+    (yearParam: string) => {
+      history.push(`/expenses/${yearParam}-${month}`);
+    },
+    [history, month]
+  );
+
+  const onChangeMes = useCallback(
+    (monthParam: string) => {
+      history.push(`/expenses/${year}-${monthParam}`);
+    },
+    [history, year]
+  );
+
   return (
     <>
-      <Box display="flex" padding="48px" alignItems="center">
-        <Box flexGrow={1}>
-          <FormControl className={classes.formControl}>
-            <InputLabel htmlFor="age-native-simple">Ano</InputLabel>
-            <Select
-              native
-              value={year}
-              onChange={(evt) => setYear(evt.target.value as string)}>
-              {YEARS.map((year) => (
-                <option value={year} key={year}>
-                  {year}
-                </option>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl className={classes.formControl}>
-            <InputLabel htmlFor="age-native-simple">Mês</InputLabel>
-            <Select
-              native
-              value={month}
-              onChange={(evt) => setMonth(evt.target.value as string)}>
-              {MONTHS.map((month) => (
-                <option value={month.numMes} key={month.numMes}>
-                  {month.mes}
-                </option>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-        <Box></Box>
-        <Box>
-          Despesa total: <strong>R$ {total}</strong>
-        </Box>
-      </Box>
+      <ExpensesMenu
+        year={year}
+        month={month}
+        onChangeAno={onChangeAno}
+        onChangeMes={onChangeMes}
+        total={total}
+      />
       <Box
         display="flex"
         alignItems="center"
@@ -127,7 +136,8 @@ export function Expenses() {
           </Tabs>
         </Paper>
       </Box>
-      {value === 0 && <ExpensesTable expenses={expenses} />}
+      {value === 0 && <ExpensesResumeTable expenses={expenses} />}
+      {value === 1 && <ExpensesCatTable expenses={catTotal} />}
     </>
   );
 }
