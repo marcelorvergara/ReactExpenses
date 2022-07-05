@@ -35,7 +35,6 @@ interface IUserInfo {
 }
 
 export function ExpensesHeader(props: IUserInfo) {
-  console.log("header");
   const classes = useStyles();
 
   return (

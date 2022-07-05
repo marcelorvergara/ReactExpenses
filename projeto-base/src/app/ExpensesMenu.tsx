@@ -50,7 +50,6 @@ interface IExpensesMenuProps {
 }
 
 export const ExpensesMenu = React.memo(function (props: IExpensesMenuProps) {
-  console.log("menu");
   const classes = useStyles();
   return (
     <Box display="flex" padding="48px" alignItems="center">

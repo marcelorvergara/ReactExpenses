@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-
+import { useCallback, useEffect, useState } from "react";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import Box from "@material-ui/core/Box";
 import { apiGetExpenses, IExpense } from "./backend";
@@ -46,14 +45,12 @@ export function Expenses() {
     const [catTotal, setCatTotal] = useState<IExpense[]>([]);
     const [expenses, setExpenses] = useState<IExpense[]>([]);
     function calcTotalExp(exp: IExpense[]) {
-      console.log("calc tot total");
       return exp.reduce((acc, obj) => {
         return acc + obj.valor;
       }, 0);
     }
 
     function calcCatTotal(exp: IExpense[]) {
-      console.log("calc cat total");
       const resultCat: IExpense[] = [];
       exp.forEach((obj) => {
         const newObj = resultCat.find((f) => f.categoria === obj.categoria);
@@ -67,11 +64,11 @@ export function Expenses() {
           });
         }
       });
+      resultCat.sort((v1, v2) => v2.valor - v1.valor);
       return resultCat;
     }
 
     useEffect(() => {
-      console.log("teste");
       apiGetExpenses(year, month).then((resp) => {
         // sum of month expenses
         const totalExpenses = calcTotalExp(resp);

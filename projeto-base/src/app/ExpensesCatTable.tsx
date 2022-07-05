@@ -29,7 +29,6 @@ interface IExpensesProps {
 }
 
 export function ExpensesCatTable(props: IExpensesProps) {
-  console.log("categoria");
   const classes = useStyles();
   return (
     <Box paddingX="48px">
